@@ -1,0 +1,146 @@
+#ifndef TAGS
+#define TAGS
+
+/*
+ *Written By-> Jagpreet Singh
+ *BITS Pilani Goa Campus
+*/
+
+#include<math.h>
+#include <cv.h>
+#include <highgui.h>
+
+using namespace cv;
+using namespace std;
+
+struct Coord{
+	float x;
+	float y;
+};
+
+struct FourTags{
+	private:
+		Coord pos;
+		double length,width;
+	
+	public:
+		double centerx,centery;
+		double theta;
+		//constructor to initialize values
+		FourTags(double width,double length)
+		{
+			this->length=length;
+			this->width=width;
+		}
+		//get position of front tags
+		inline Coord& getFront(){
+			pos.x=(centerx+(length/3.0)*cos(theta));
+			pos.y=(centery+(length/3.0)*sin(theta));
+			return pos;
+		}
+		//get position of back tag
+		inline Coord& getBack(){
+			pos.x=(centerx-(length/3.0)*cos(theta));
+			pos.y=(centery-(length/3.0)*sin(theta));
+			return pos;
+		}
+		//get position of right tag
+		inline Coord& getRight(){
+			pos.x=(centerx-(width/3.0)*sin(theta));
+			pos.y=(centery+(width/3.0)*cos(theta));
+			return pos;
+		}		
+		//get position of left tag
+		inline Coord& getLeft(){
+			pos.x=(centerx+(width/3.0)*sin(theta));
+			pos.y=(centery-(width/3.0)*cos(theta));
+			return pos;
+		}
+		//get position of center tag
+		inline Coord& getCenter(){
+			pos.x=centerx;
+			pos.y=centery;
+			return pos;
+		}
+		
+		//base Must be HSV
+		//takes 5 hue parameters, to be used to draw the markers..
+		void draw(Mat base,unsigned char h0,unsigned char h1,unsigned char h2,unsigned char h3,unsigned char h4){
+			int i,j;
+			float tempx,tempy;
+			
+			getFront();
+			for(i=pos.x-length/6.0 ; i<=pos.x+length/6.0 ;i++)
+				for(j=pos.y-length/6.0 ; j<=pos.y+length/6.0 ;j++){
+					tempx=((float)i-pos.x);
+					tempy=((float)j-pos.y);
+					//if a pixel is inside of a circle, color it...
+					// the statement inside if is a equation of circle..
+					if( tempx*tempx + tempy*tempy < (length/6.0)*(length/6.0)  && i<base.size.p[1] && i>0 && j<base.size.p[0] && j>0){
+						base.at<Vec3b>(j,i)[0]=h1;
+						base.at<Vec3b>(j,i)[1]=200;
+						base.at<Vec3b>(j,i)[2]=200;
+					}
+				}
+				
+			getBack();
+			for(i=pos.x-length/6.0 ; i<=pos.x+length/6.0 ;i++)
+				for(j=pos.y-length/6.0 ; j<=pos.y+length/6.0 ;j++){
+					tempx=((float)i-pos.x);
+					tempy=((float)j-pos.y);
+					//if a pixel is inside of a circle, color it...
+					// the statement inside if is a equation of circle..
+					if( tempx*tempx + tempy*tempy < (length/6.0)*(length/6.0)  && i<base.size.p[1] && i>0 && j<base.size.p[0] && j>0){
+						base.at<Vec3b>(j,i)[0]=h2;
+						base.at<Vec3b>(j,i)[1]=200;
+						base.at<Vec3b>(j,i)[2]=200;
+					}
+				}
+				
+			getLeft();
+			for(i=pos.x-width/6.0 ; i<=pos.x+width/6.0 ;i++)
+				for(j=pos.y-width/6.0 ; j<=pos.y+width/6.0 ;j++){
+					tempx=((float)i-pos.x);
+					tempy=((float)j-pos.y);
+					//if a pixel is inside of a circle, color it...
+					// the statement inside if is a equation of circle..
+					if( tempx*tempx + tempy*tempy < (width/6.0)*(width/6.0)  && i<base.size.p[1] && i>0 && j<base.size.p[0] && j>0){
+						base.at<Vec3b>(j,i)[0]=h3;
+						base.at<Vec3b>(j,i)[1]=200;
+						base.at<Vec3b>(j,i)[2]=200;
+					}
+				}
+			
+			getRight();
+			for(i=pos.x-width/6.0 ; i<=pos.x+width/6.0 ;i++)
+				for(j=pos.y-width/6.0 ; j<=pos.y+width/6.0 ;j++){
+					tempx=((float)i-pos.x);
+					tempy=((float)j-pos.y);
+					//if a pixel is inside of a circle, color it...
+					// the statement inside if is a equation of circle..
+					if( tempx*tempx + tempy*tempy < (width/6.0)*(width/6.0)  && i<base.size.p[1] && i>0 && j<base.size.p[0] && j>0 ){
+						base.at<Vec3b>(j,i)[0]=h4;
+						base.at<Vec3b>(j,i)[1]=200;
+						base.at<Vec3b>(j,i)[2]=200;
+					}
+				}
+				
+			getCenter();
+			for(i=pos.x-width/6.0 ; i<=pos.x+width/6.0 ;i++)
+				for(j=pos.y-width/6.0 ; j<=pos.y+width/6.0 ;j++){
+					tempx=((float)i-pos.x);
+					tempy=((float)j-pos.y);
+					int temp=(width>length)?length/6.0:width/6.0;
+					//if a pixel is inside of a circle, color it...
+					// the statement inside if is a equation of circle..
+					if( tempx*tempx + tempy*tempy < temp*temp  && i<base.size.p[1] && i>0 && j<base.size.p[0] && j>0){
+						base.at<Vec3b>(j,i)[0]=h0;
+						base.at<Vec3b>(j,i)[1]=200;
+						base.at<Vec3b>(j,i)[2]=200;
+					}
+				}
+		}
+		
+};
+
+#endif

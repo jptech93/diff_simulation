@@ -1,0 +1,105 @@
+#ifndef DIFF
+#define DIFF
+
+/*
+ *Written By-> Jagpreet Singh
+ *BITS Pilani Goa Campus
+*/
+
+#include<math.h>
+#include <cv.h>
+#include <highgui.h>
+
+using namespace cv;
+using namespace std;
+
+class Differential{
+	private:
+		double width;
+		double length;
+		double ds,dtheta;
+		unsigned char hsv1[3],hsv2[3];
+		float tagR;
+		float maxsize;
+		
+	public:
+		int vl,vr;
+		double px,py;
+		double x,y;
+		double theta;
+		double dt;
+	//constructor to initialize the values
+	Differential(double wid,double len)
+	{
+		width=wid;
+		length=len;
+		tagR=(width>length)?length/2.0:width/2.0;
+		maxsize=sqrt(width*width+length*length);
+		vl=0;vr=0;
+		theta=0;
+		dt=0.008;
+		x=0;
+		y=0;
+	}
+	//function to calculate next position
+	inline void calculateNext(){
+		if((vl-vr)>0.00001 || (vr-vl)>0.00001){
+		dtheta=((double(vl-vr))/width)*dt;
+		ds=((double(vl+vr))/2)*dt;
+		px=x;
+		py=y;
+		x= px + ds*cos(theta+dtheta);
+		y= py + ds*sin(theta+dtheta);
+		theta+=dtheta;
+		if(theta>(2*M_PI))theta-=2*M_PI;
+		if(theta<(-2*M_PI))theta+=2*M_PI;
+		}
+		else{
+			px=x;
+			py=y;
+			x=px+(vl*dt)*cos(theta);
+			y=py+(vl*dt)*sin(theta);
+		}
+	}
+	
+	//base must be a HSV image
+	//takes 2 h,s,v parameters, to be used to draw the markers..
+	//function to draw markers..
+	inline void createNew(Mat base,unsigned char h1,unsigned char s1,unsigned char v1,unsigned char h2,unsigned char s2,unsigned char v2 ){
+		static int i,j;
+		static float tempx,tempy,sn,cs;
+		
+		hsv1[0]=h1;hsv1[1]=s1;hsv1[2]=v1;
+		hsv2[0]=h2;hsv2[1]=s2;hsv2[2]=v2;
+		
+		sn=sin(theta);
+		cs=cos(theta);
+		for(i=(int)(x-maxsize/2) ; i<(int)(x+maxsize/2) ; i++)
+			for(j=(int)(y-maxsize/2); j<((int)y+maxsize/2) ; j++){
+				tempx=((float)i-x+(float(length)/4.0)*cs);
+				tempy=((float)j-y+(float(length)/4.0)*sn);
+				if( tempx*tempx + tempy*tempy < tagR*tagR && i<base.size.p[1] && i>0 && j<base.size.p[0] && j>0 ){
+					base.at<Vec3b>(j,i)[0]=hsv1[0];
+					base.at<Vec3b>(j,i)[1]=hsv1[1];
+					base.at<Vec3b>(j,i)[2]=hsv1[2];
+				}
+				
+				tempx=((float)i-x-(float(length)/4.0)*cs);
+				tempy=((float)j-y-(float(length)/4.0)*sn);
+				if( tempx*tempx + tempy*tempy < tagR*tagR  && i<base.size.p[1] && i>0 && j<base.size.p[0] && j>0 ){
+					base.at<Vec3b>(j,i)[0]=hsv2[0];
+					base.at<Vec3b>(j,i)[1]=hsv2[1];
+					base.at<Vec3b>(j,i)[2]=hsv2[2];
+				}
+			}
+	}
+	
+	//both inputs Must be HSV
+	//takes 2 h,s,v parameters, to be used to draw the markers..
+	inline void update(Mat base,unsigned char h1,unsigned char s1,unsigned char v1,unsigned char h2,unsigned char s2,unsigned char v2 ){
+		calculateNext();
+		createNew(base,h1,s1,v1,h2,s2,v2);		
+	}
+	
+};
+#endif
